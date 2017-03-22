@@ -20,15 +20,6 @@ class SetAttributeRequirements extends AbstractMassEditOperation
     /** @var ChannelRepositoryInterface */
     protected $channelRepository;
 
-    /** @var string */
-    protected $values;
-
-    /** @var string[] */
-    protected $attributes;
-
-    /** @var array */
-    protected $requirements;
-
     /**
      * @param ChannelRepositoryInterface   $channelRepository
      * @param string                       $jobInstanceCode
@@ -67,36 +58,6 @@ class SetAttributeRequirements extends AbstractMassEditOperation
     }
 
     /**
-     * Gets values
-     *
-     * @return string
-     */
-    public function getValues()
-    {
-        return $this->values;
-    }
-
-    /**
-     * Gets attributes
-     *
-     * @return array
-     */
-    public function getAttributes()
-    {
-        return $this->attributes;
-    }
-
-    /**
-     * Gets requirements
-     *
-     * @return array
-     */
-    public function getRequirements()
-    {
-        return $this->requirements;
-    }
-
-    /**
      * Sets values and converts to attribute, requirements and actions array
      *
      * @param string $values
@@ -105,20 +66,45 @@ class SetAttributeRequirements extends AbstractMassEditOperation
      */
     public function setValues($values)
     {
-        $this->values = $values;
-        $this->attributes = $this->getAttributesFromValues();
-        $this->requirements = $this->getRequirementsFromValues();
-        $this->actions = $this->getActionsFromValues();
+        $this->actions = $this->getActionsFromValues($values);
 
         return $this;
     }
 
     /**
+     * @return array
+     */
+    protected function getActionsFromValues($values)
+    {
+        $attributeRequirements = [];
+
+        $requirements = $this->getAttributesFromValues($values);
+        $attributes = $this->getAttributesFromValues($values);
+
+        $channelCodes = array_map(function (ChannelInterface $channel) {
+            return $channel->getCode();
+        }, $this->channelRepository->findAll());
+
+        foreach ($attributes as $attributeCode) {
+            foreach ($channelCodes as $channelCode) {
+                $attributeRequirements[] = [
+                    'attribute_code' => $attributeCode,
+                    'channel_code'   => $channelCode,
+                    'is_required'    => array_key_exists($channelCode, $requirements) &&
+                        in_array($attributeCode, $requirements[$channelCode])
+                ];
+            }
+        }
+
+        return $attributeRequirements;
+    }
+
+    /**
      * @return string[]
      */
-    protected function getAttributesFromValues()
+    protected function getAttributesFromValues($values)
     {
-        $data = (array) json_decode($this->values, true);
+        $data = (array) json_decode($values, true);
 
         if (array_key_exists('attributes', $data)) {
             return $data['attributes'];
@@ -132,36 +118,12 @@ class SetAttributeRequirements extends AbstractMassEditOperation
      */
     protected function getRequirementsFromValues()
     {
-        $data = (array) json_decode($this->values, true);
+        $data = (array) json_decode($values, true);
 
         if (array_key_exists('attribute_requirements', $data)) {
             return $data['attribute_requirements'];
         }
 
         return [];
-    }
-
-    /**
-     * @return array
-     */
-    protected function getActionsFromValues()
-    {
-        $attributeRequirements = [];
-        $channelCodes = array_map(function (ChannelInterface $channel) {
-            return $channel->getCode();
-        }, $this->channelRepository->findAll());
-
-        foreach ($this->getAttributes() as $attributeCode) {
-            foreach ($channelCodes as $channelCode) {
-                $attributeRequirements[] = [
-                    'attribute_code' => $attributeCode,
-                    'channel_code'   => $channelCode,
-                    'is_required'    => array_key_exists($channelCode, $this->getRequirements()) &&
-                        in_array($attributeCode, $this->getRequirements()[$channelCode])
-                ];
-            }
-        }
-
-        return $attributeRequirements;
     }
 }
