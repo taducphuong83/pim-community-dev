@@ -248,3 +248,14 @@ Feature: Edit common attributes of many products at once
     And attribute Comment of "sandals" should be "$(echo "shell_injection" > shell_injection.txt)"
     And attribute Comment of "sneakers" should be "$(echo "shell_injection" > shell_injection.txt)"
     And file "%web%shell_injection.txt" should not exist
+
+  @jira https://akeneo.atlassian.net/browse/PIM-6199
+  Scenario: Successfully disable form when we are in validation step
+    Given I select rows boots, sandals and sneakers
+    And I press "Change product information" on the "Bulk Actions" dropdown button
+    When I choose the "Edit common attributes" operation
+    Then The available attributes button should be enabled
+    And I display the Name attribute
+    And I change the "Name" to "boots"
+    And I move to the confirm page
+    Then The available attributes button should be disabled
