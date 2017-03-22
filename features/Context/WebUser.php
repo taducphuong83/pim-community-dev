@@ -2046,7 +2046,7 @@ class WebUser extends RawMinkContext
      */
     public function iMoveOnToTheNextStep()
     {
-        $this->iMoveOnToTheNextStep();
+        $this->iMoveToTheConfirmPage();
         $this->scrollContainerTo(900);
         $this->getCurrentPage()->confirm();
         $this->wait();
