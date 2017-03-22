@@ -100,6 +100,8 @@ class SetAttributeRequirements extends AbstractMassEditOperation
     }
 
     /**
+     * @param string $values
+     *
      * @return string[]
      */
     protected function getAttributesFromValues($values)
@@ -114,9 +116,11 @@ class SetAttributeRequirements extends AbstractMassEditOperation
     }
 
     /**
+     * @param string $values
+     *
      * @return array
      */
-    protected function getRequirementsFromValues()
+    protected function getRequirementsFromValues($values)
     {
         $data = (array) json_decode($values, true);
 
